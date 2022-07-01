@@ -19,18 +19,6 @@ int main(int argc, char** argv) {
 
   auto e1 = reg.create_entity();
 
-  reg.add_component<vec3>(e1, 0, 1, 2);
-
-  std::cout << reg.has_component<vec3>(e1) << std::endl;
-
-  reg.remove_component<vec3>(e1);
-
-  std::cout << reg.has_component<vec3>(e1) << std::endl;
-
-  reg.add_component<vec3>(e1, 0, 1, 2);
-  
-  std::cout << reg.has_component<vec3>(e1) << std::endl;
-
   return EXIT_SUCCESS;
 }
 

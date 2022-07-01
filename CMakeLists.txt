@@ -20,19 +20,19 @@ target_sources(
     src/registry.cpp
     src/main.cpp
   PUBLIC
-    src/types.hpp
-    src/entity.hpp
-    src/component_container.hpp
-    src/component_container.inl
-    src/registry.hpp
+    include/${CMAKE_PROJECT_NAME}/types.hpp
+    include/${CMAKE_PROJECT_NAME}/entity.hpp
+    include/${CMAKE_PROJECT_NAME}/component_container.hpp
+    include/${CMAKE_PROJECT_NAME}/component_container.inl
+    include/${CMAKE_PROJECT_NAME}/registry.hpp
 )
 
 
 target_include_directories(
   ${PROJECT_NAME}
-  INTERFACE
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/..>
-    $<INSTALL_INTERFACE:include/${CMAKE_PROJECT_NAME}>
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/${CMAKE_PROJECT_NAME}>
+    $<INSTALL_INTERFACE:include>
 )
 
 target_compile_features(

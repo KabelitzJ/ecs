@@ -44,8 +44,6 @@ void component_container<Type>::remove(const entity& entity) {
 
     _index_to_entity.erase(index);
     _entity_to_index.erase(entity);
-
-    std::cout << "_components.size(): " << _components.size() << '\n';
   }
 }
 
@@ -58,8 +56,6 @@ component_container<Type>::reference component_container<Type>::add(const entity
   _index_to_entity.emplace(std::make_pair(index, entity));
 
   _components.push_back(std::make_unique<value_type>(std::forward<Args>(args)...));
-
-  std::cout << "_components.size(): " << _components.size() << '\n';
 
   return *_components.back();
 }
