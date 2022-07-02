@@ -69,11 +69,9 @@ int main(int argc, char** argv) {
 
   auto registry = ecs::registry{};
 
-  for (auto i = 0; i < 5; ++i) {
-    auto e = registry.create_entity();
-    registry.add_component<transform>(e, vec3{0.0f, 40.0f, 0.0f}, vec3{}, vec3{});
-    registry.add_component<rigidbody>(e, vec3{}, 1.0f);
-  }
+  auto e = registry.create_entity();
+  registry.add_component<transform>(e, vec3{0.0f, 40.0f, 0.0f}, vec3{}, vec3{});
+  registry.add_component<rigidbody>(e, vec3{}, 1.0f);
 
   using clock = std::chrono::steady_clock;
   using duration = std::chrono::duration<ecs::float32>;
@@ -88,6 +86,11 @@ int main(int argc, char** argv) {
     simulate(registry, delta_time);
     print(registry);
   }
+
+  registry.remove_component<transform>(e);
+  registry.remove_component<rigidbody>(e);
+
+  registry.destroy_entity(e);
 
   return EXIT_SUCCESS;
 }

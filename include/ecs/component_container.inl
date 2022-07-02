@@ -101,13 +101,13 @@ void component_container<Type, Allocator>::patch(const entity& entity, Function&
 }
 
 template<component Type, typename Allocator>
-component_container<Type, Allocator>::component_deleter::component_deleter(Allocator& allocator)
+component_container<Type, Allocator>::component_deleter::component_deleter(allocator_type& allocator)
 : _allocator{std::addressof(allocator)} { }
 
 template<component Type, typename Allocator>
-void component_container<Type, Allocator>::component_deleter::operator()(Type* component) {
+void component_container<Type, Allocator>::component_deleter::operator()(value_type* component) {
   allocator_traits::destroy(*_allocator, component);
-  allocator_traits::deallocate(*_allocator, component, 1);
+  allocator_traits::deallocate(*_allocator, component, 1);  
 }
 
 } // namespace ecs

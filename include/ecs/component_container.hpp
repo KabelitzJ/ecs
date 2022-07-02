@@ -57,15 +57,15 @@ public:
 
   void remove(const entity& entity) override;
 
-  bool contains(const entity& entity) const noexcept override;
+  [[nodiscard]] bool contains(const entity& entity) const noexcept override;
 
   template<typename... Args>
   requires std::constructible_from<Type, Args...>
   reference add(const entity& entity, Args&&... args);
 
-  const_reference get(const entity& entity) const;
+  [[nodiscard]] const_reference get(const entity& entity) const;
 
-  reference get(const entity& entity);
+  [[nodiscard]] reference get(const entity& entity);
 
   template<std::invocable<Type&> Function>
   void patch(const entity& entity, Function&& function);
