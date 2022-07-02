@@ -1,68 +1,113 @@
 #include "component_container.hpp"
 
+#include <functional>
+
 namespace ecs {
 
-template<typename Type>
-component_container<Type>::component_container() noexcept
-: _entity_to_index{},
-  _index_to_entity{},
+template<component Type, typename Allocator>
+component_container<Type, Allocator>::component_container() noexcept
+: _allocator{},
+  _sparse{},
+  _dense{},
   _components{} {}
 
-template<typename Type>
-component_container<Type>::component_container(component_container&& other) noexcept
-: _entity_to_index{std::move(other._entity_to_index)},
-  _index_to_entity{std::move(other._index_to_entity)},
+template<component Type, typename Allocator>
+component_container<Type, Allocator>::component_container(component_container&& other) noexcept
+: _sparse{std::move(other._sparse)},
+  _dense{std::move(other._dense)},
   _components{std::move(other._components)} {}
 
-template<typename Type>
-component_container<Type>& component_container<Type>::operator=(component_container&& other) noexcept {
+template<component Type, typename Allocator>
+component_container<Type, Allocator>& component_container<Type, Allocator>::operator=(component_container&& other) noexcept {
   if (this != &other) {
-    _entity_to_index = std::move(other._entity_to_index);
-    _index_to_entity = std::move(other._index_to_entity);
+    _sparse = std::move(other._sparse);
+    _dense = std::move(other._dense);
     _components = std::move(other._components);
   }
 
   return *this;
 }
 
-template<typename Type>
-void component_container<Type>::remove(const entity& entity) {
-  if (const auto entry = _entity_to_index.find(entity); entry != _entity_to_index.cend()) {
-    const auto index = entry->second;
-
-    auto& back = _components.back();
-    auto& current = _components[index];
-
-    using std::swap;
-
-    swap(current, back);
-
-    _components.pop_back();
-
-    const auto& back_entity = _index_to_entity.at(_components.size());
-    _entity_to_index.at(back_entity) = index;
-
-    _index_to_entity.erase(index);
-    _entity_to_index.erase(entity);
+template<component Type, typename Allocator>
+void component_container<Type, Allocator>::remove(const entity& entity) {
+  if (!contains(entity)) {
+    return;
   }
+
+  const auto index = _sparse.at(entity);
+
+  _sparse.at(_dense.back()) = index;
+  const auto& old_entity = std::exchange(_dense.at(index), _dense.back());
+
+  using std::swap;
+  swap(_components.at(index), _components.back());
+
+  _dense.pop_back();
+  _components.pop_back();
+  _sparse.erase(old_entity);
 }
 
-template<typename Type>
+template<component Type, typename Allocator>
+bool component_container<Type, Allocator>::contains(const entity& entity) const noexcept {
+  if (const auto entry = _sparse.find(entity); entry != _sparse.cend()) {
+    const auto index = entry->second;
+    return index < _dense.size() && _dense[index] == entity;
+  }
+
+  return false;
+}
+
+template<component Type, typename Allocator>
 template<typename... Args>
-component_container<Type>::reference component_container<Type>::add(const entity& entity, Args&&... args) {
+requires std::constructible_from<Type, Args...>
+component_container<Type, Allocator>::reference component_container<Type, Allocator>::add(const entity& entity, Args&&... args) {
+  if (contains(entity)) {
+    throw std::runtime_error{"Entity already contains component"};
+  }
+
   const auto index = _components.size();
 
-  _entity_to_index.emplace(std::make_pair(entity, index));
-  _index_to_entity.emplace(std::make_pair(index, entity));
+  _sparse.emplace(std::make_pair(entity, index));
+  _dense.push_back(entity);
 
-  _components.push_back(std::make_unique<value_type>(std::forward<Args>(args)...));
+  auto component = std::unique_ptr<value_type, component_deleter>{allocator_traits::allocate(_allocator, 1), component_deleter{_allocator}};
+  allocator_traits::construct(_allocator, component.get(), std::forward<Args>(args)...);
+
+  _components.push_back(std::move(component));
 
   return *_components.back();
 }
 
-template<typename Type>
-bool component_container<Type>::contains(const entity& entity) const {
-  return _entity_to_index.contains(entity) && _index_to_entity.at(_entity_to_index.at(entity)) == entity;
+template<component Type, typename Allocator>
+component_container<Type, Allocator>::const_reference component_container<Type, Allocator>::get(const entity& entity) const {
+  if (const auto entry = _sparse.find(entity); entry != _sparse.cend()) {
+    const auto index = entry->second;
+
+    return *_components.at(index);
+  }
+
+  throw std::runtime_error{"Entity does not have component assigned to it"};
+}
+
+template<component Type, typename Allocator>
+component_container<Type, Allocator>::reference component_container<Type, Allocator>::get(const entity& entity) {
+  return const_cast<reference>(std::as_const(*this).get(entity));
+}
+
+template<component Type, typename Allocator>
+template<std::invocable<Type&> Function>
+void component_container<Type, Allocator>::patch(const entity& entity, Function&& function) {
+  std::invoke(function, get(entity));
+}
+
+template<component Type, typename Allocator>
+component_container<Type, Allocator>::component_deleter::component_deleter(Allocator& allocator)
+: _allocator{std::addressof(allocator)} { }
+
+template<component Type, typename Allocator>
+void component_container<Type, Allocator>::component_deleter::operator()(Type* component) {
+  allocator_traits::destroy(*_allocator, component);
+  allocator_traits::deallocate(*_allocator, component, 1);
 }
 
 } // namespace ecs
