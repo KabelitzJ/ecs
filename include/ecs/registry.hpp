@@ -65,12 +65,9 @@ private:
   template<component Component>
   [[nodiscard]] size_type _generate_next_component_id() const;
 
-  template<component Component>
-  [[nodiscard]] size_type _register_component() const;
-
   std::vector<entity> _entities{};
   std::vector<size_type> _free_entities{};
-  mutable component_container_type _components{};
+  component_container_type _components{};
   mutable size_type _current_component_id{};
 
 }; // class registry;

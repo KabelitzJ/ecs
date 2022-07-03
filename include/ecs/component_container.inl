@@ -5,20 +5,20 @@
 namespace ecs {
 
 template<component Type, typename Allocator>
-component_container<Type, Allocator>::component_container() noexcept
+inline component_container<Type, Allocator>::component_container() noexcept
 : _allocator{},
   _sparse{},
   _dense{},
   _components{} {}
 
 template<component Type, typename Allocator>
-component_container<Type, Allocator>::component_container(component_container&& other) noexcept
+inline component_container<Type, Allocator>::component_container(component_container&& other) noexcept
 : _sparse{std::move(other._sparse)},
   _dense{std::move(other._dense)},
   _components{std::move(other._components)} {}
 
 template<component Type, typename Allocator>
-component_container<Type, Allocator>& component_container<Type, Allocator>::operator=(component_container&& other) noexcept {
+inline component_container<Type, Allocator>& component_container<Type, Allocator>::operator=(component_container&& other) noexcept {
   if (this != &other) {
     _sparse = std::move(other._sparse);
     _dense = std::move(other._dense);
@@ -29,7 +29,7 @@ component_container<Type, Allocator>& component_container<Type, Allocator>::oper
 }
 
 template<component Type, typename Allocator>
-void component_container<Type, Allocator>::remove(const entity& entity) {
+inline void component_container<Type, Allocator>::remove(const entity& entity) {
   if (!contains(entity)) {
     return;
   }
@@ -48,7 +48,7 @@ void component_container<Type, Allocator>::remove(const entity& entity) {
 }
 
 template<component Type, typename Allocator>
-bool component_container<Type, Allocator>::contains(const entity& entity) const noexcept {
+inline bool component_container<Type, Allocator>::contains(const entity& entity) const noexcept {
   if (const auto entry = _sparse.find(entity); entry != _sparse.cend()) {
     const auto index = entry->second;
     return index < _dense.size() && _dense[index] == entity;
@@ -60,7 +60,7 @@ bool component_container<Type, Allocator>::contains(const entity& entity) const 
 template<component Type, typename Allocator>
 template<typename... Args>
 requires std::constructible_from<Type, Args...>
-component_container<Type, Allocator>::reference component_container<Type, Allocator>::add(const entity& entity, Args&&... args) {
+inline component_container<Type, Allocator>::reference component_container<Type, Allocator>::add(const entity& entity, Args&&... args) {
   if (contains(entity)) {
     throw std::runtime_error{"Entity already contains component"};
   }
@@ -79,7 +79,7 @@ component_container<Type, Allocator>::reference component_container<Type, Alloca
 }
 
 template<component Type, typename Allocator>
-component_container<Type, Allocator>::const_reference component_container<Type, Allocator>::get(const entity& entity) const {
+inline component_container<Type, Allocator>::const_reference component_container<Type, Allocator>::get(const entity& entity) const {
   if (const auto entry = _sparse.find(entity); entry != _sparse.cend()) {
     const auto index = entry->second;
 
@@ -90,22 +90,22 @@ component_container<Type, Allocator>::const_reference component_container<Type, 
 }
 
 template<component Type, typename Allocator>
-component_container<Type, Allocator>::reference component_container<Type, Allocator>::get(const entity& entity) {
+inline component_container<Type, Allocator>::reference component_container<Type, Allocator>::get(const entity& entity) {
   return const_cast<reference>(std::as_const(*this).get(entity));
 }
 
 template<component Type, typename Allocator>
 template<std::invocable<Type&> Function>
-void component_container<Type, Allocator>::patch(const entity& entity, Function&& function) {
+inline void component_container<Type, Allocator>::patch(const entity& entity, Function&& function) {
   std::invoke(function, get(entity));
 }
 
 template<component Type, typename Allocator>
-component_container<Type, Allocator>::component_deleter::component_deleter(allocator_type& allocator)
+inline component_container<Type, Allocator>::component_deleter::component_deleter(allocator_type& allocator)
 : _allocator{std::addressof(allocator)} { }
 
 template<component Type, typename Allocator>
-void component_container<Type, Allocator>::component_deleter::operator()(value_type* component) {
+inline void component_container<Type, Allocator>::component_deleter::operator()(value_type* component) {
   allocator_traits::destroy(*_allocator, component);
   allocator_traits::deallocate(*_allocator, component, 1);  
 }

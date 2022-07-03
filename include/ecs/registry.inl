@@ -10,6 +10,10 @@ inline Component& registry::add_component(const entity& entity, Args&&... args) 
 
   const auto component_id = _component_id<Component>();
 
+  if (component_id == _components.size()) {
+    _components.push_back(std::make_unique<component_container<Component>>());
+  }
+
   auto& container = *static_cast<component_container<Component>*>(_components[component_id].get());
 
   return container.add(entity, std::forward<Args>(args)...);
@@ -97,15 +101,9 @@ inline registry::size_type registry::_component_id() const {
 }
 
 template<component Component>
-registry::size_type registry::_generate_next_component_id() const {
-  static const auto id = _register_component<Component>();
+inline registry::size_type registry::_generate_next_component_id() const {
+  static const auto id = _current_component_id++;
   return id;
-}
-
-template<component Component>
-registry::size_type registry::_register_component() const {
-  _components.push_back(std::make_unique<component_container<Component>>());
-  return _current_component_id++;
 }
 
 } // namespace ecs
