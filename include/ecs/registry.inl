@@ -1,5 +1,7 @@
 #include "registry.hpp"
 
+#include <ranges>
+
 namespace ecs {
 
 template<component Component, typename... Args>
