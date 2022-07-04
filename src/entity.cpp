@@ -37,12 +37,4 @@ bool operator==(const entity& lhs, const entity& rhs) noexcept {
   return lhs._value == rhs._value;
 }
 
-std::ostream& operator<<(std::ostream& output_stream, const entity& entity) {
-  auto bit_representation = std::bitset<sizeof(entity::value_type) * 8>{entity._value};
-
-  output_stream << bit_representation;
-
-  return output_stream;
-}
-
 } // namespace ecs

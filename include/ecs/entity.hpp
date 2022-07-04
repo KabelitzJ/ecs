@@ -8,7 +8,7 @@
 
 namespace ecs {
 
-class entity {
+class entity final {
 
   friend struct std::hash<entity>;
 

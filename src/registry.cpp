@@ -23,9 +23,7 @@ entity registry::create_entity() {
 
   const auto id = static_cast<entity::id_type>(_entities.size());
 
-  const auto new_entity = entity{id, 0};
-
-  _entities.push_back(std::move(new_entity));
+  _entities.push_back(entity{id, entity::version_type{0}});
 
   return _entities.back();
 }
@@ -43,7 +41,12 @@ void registry::destroy_entity(const entity& entity) {
 }
 
 bool registry::is_valid_entity(const entity& entity) const noexcept {
+  if (entity == entity::null) {
+    return false;
+  }
+
   const auto index = static_cast<size_type>(entity._id());
+
   return index < _entities.size() && _entities[index] == entity;
 }
 
